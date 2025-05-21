@@ -436,7 +436,7 @@ version = "2.2.6"
 description = "Fundamental package for array computing in Python"
 optional = false
 python-versions = ">=3.10"
-groups = ["test"]
+groups = ["main", "test"]
 files = [
     {file = "numpy-2.2.6-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:b412caa66f72040e6d268491a59f2c43bf03eb6c96dd8f0307829feb7fa2b6fb"},
     {file = "numpy-2.2.6-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:8e41fd67c52b86603a91c1a505ebaef50b3314de0213461c7a6e99c9a3beff90"},
@@ -494,6 +494,124 @@ files = [
     {file = "numpy-2.2.6-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:d042d24c90c41b54fd506da306759e06e568864df8ec17ccc17e9e884634fd00"},
     {file = "numpy-2.2.6.tar.gz", hash = "sha256:e29554e2bef54a90aa5cc07da6ce955accb83f21ab5de01a62c8478897b264fd"},
 ]
+
+[[package]]
+name = "openvino"
+version = "2025.1.0"
+description = "OpenVINO(TM) Runtime"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "openvino-2025.1.0-18503-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:a22ffd49e16b4256515d34210a598c04b2621688c7194c3e5e61d6d21e37f860"},
+    {file = "openvino-2025.1.0-18503-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:6f8604ddaa10007fbdc215f30a2e32dc3ec90f2d091e8fb2a62eddb958b1ccaf"},
+    {file = "openvino-2025.1.0-18503-cp310-cp310-manylinux2014_x86_64.whl", hash = "sha256:571519aaf15dff0d97be0796641d7e7157cb866510bb966449c0fc7db5851f4e"},
+    {file = "openvino-2025.1.0-18503-cp310-cp310-manylinux_2_31_aarch64.whl", hash = "sha256:4b875c7ec99c7fa3d294b1014199af2a69c241ef60cd1606171f7f7d51e0277b"},
+    {file = "openvino-2025.1.0-18503-cp310-cp310-win_amd64.whl", hash = "sha256:5d127e1ed191eaf40892ab73f386fe100d54bcd1fe378792e7c20b2fcc2c05de"},
+    {file = "openvino-2025.1.0-18503-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:7b6a462f59c2af9f337ecddeb93077937979a50154e9a8ce630fb8497a103cc8"},
+    {file = "openvino-2025.1.0-18503-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ee6053d5a188f02071b8dcd8f7f241f4c206a8d67ef9ce26d50efaa87a816734"},
+    {file = "openvino-2025.1.0-18503-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:aa3135ba237aafcaffd65b9df3f4386ce6ac6dbcf25a3dcdc4b3a3963532c327"},
+    {file = "openvino-2025.1.0-18503-cp311-cp311-manylinux_2_31_aarch64.whl", hash = "sha256:35ef61dce47406c5af603aa49fb88819d573d9e1ce07c123ccf88573d7429559"},
+    {file = "openvino-2025.1.0-18503-cp311-cp311-win_amd64.whl", hash = "sha256:a58dcd786287fb506f87f622f21df88df7e569970e69896dfb2aeba805a47290"},
+    {file = "openvino-2025.1.0-18503-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:e3ee900e0890e295ddb236edd00631b4afc1e6bc76d94fd818319ae73853caa0"},
+    {file = "openvino-2025.1.0-18503-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:30e5585775671676ac6eb37ef0738ac70c4ff3bfd983175ff01dd7dcff3bc7c6"},
+    {file = "openvino-2025.1.0-18503-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:0ef5e48d565d78885fc98eb2cf59904cc8e6477102fa68d7ff0d6f8ba89eb5a8"},
+    {file = "openvino-2025.1.0-18503-cp312-cp312-manylinux_2_31_aarch64.whl", hash = "sha256:c9a1350d494c612495c58e6ef9f4935d4dba03d0e89911cd9d2add6b9da17485"},
+    {file = "openvino-2025.1.0-18503-cp312-cp312-win_amd64.whl", hash = "sha256:fd19a0660e04228f8710e832b2d8cbc2134325f553b9c265e212032241596ace"},
+    {file = "openvino-2025.1.0-18503-cp313-cp313-macosx_10_15_x86_64.whl", hash = "sha256:5a128cf9ea645ffc89de9fc5745b7e7a7a1c825a37cfa92d0871c01e57ae5d0f"},
+    {file = "openvino-2025.1.0-18503-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:9844c84412f67816fb3a64835ed4dd9575a07cc7a4b726a5f4cdcb897ab33775"},
+    {file = "openvino-2025.1.0-18503-cp313-cp313-manylinux2014_x86_64.whl", hash = "sha256:746fc485c60b7c2be940f9c04105809ac40dfe8487ec422e872dc1340c553b75"},
+    {file = "openvino-2025.1.0-18503-cp313-cp313-manylinux_2_31_aarch64.whl", hash = "sha256:b6a8006fde8d2a6f1a79d818893559c5fa7e7fcdf93b7b4e3e781301b289846e"},
+    {file = "openvino-2025.1.0-18503-cp313-cp313-win_amd64.whl", hash = "sha256:a8ea72c31fe243942870dd030e0b6b12642fc39a1d89e3762e59b143b45821b7"},
+    {file = "openvino-2025.1.0-18503-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:572b795dbbf29c39bd1e0db1b70952369290a89dd2104851db31bf979b91e564"},
+    {file = "openvino-2025.1.0-18503-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:11ea4aac9d2ee0773c9540f29ab146b1d7e606b4db5ccd9fe795e25bb783bdfe"},
+    {file = "openvino-2025.1.0-18503-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:c3def67b544f90607f289640ed8375d782233323c2766c61b48a08489e18cced"},
+    {file = "openvino-2025.1.0-18503-cp39-cp39-manylinux_2_31_aarch64.whl", hash = "sha256:79d1a8dfc75978aae03d061e054205f852e5b7a4b266fef03880cbfc528b527e"},
+    {file = "openvino-2025.1.0-18503-cp39-cp39-win_amd64.whl", hash = "sha256:ede62485159aa25d18894d1f2307d15673b4d0f7e120cb79a4ad27d4b4b3bc9e"},
+]
+
+[package.dependencies]
+numpy = ">=1.16.6,<2.3.0"
+openvino-telemetry = ">=2023.2.1"
+packaging = "*"
+
+[[package]]
+name = "openvino-genai"
+version = "2025.1.0.0"
+description = "Library of the most popular Generative AI model pipelines, optimized execution methods, and samples"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "openvino_genai-2025.1.0.0-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:d6abd16b96bb7a23eedbd7db9eae7992c7d47dc50ca0e76ebb0b9892c2d8ebfe"},
+    {file = "openvino_genai-2025.1.0.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:85e6cd01b2bc3dce6e0861b012f921297d43d54cfa95699476ef828a0e224993"},
+    {file = "openvino_genai-2025.1.0.0-cp310-cp310-manylinux2014_x86_64.whl", hash = "sha256:649d47b616075abc252de9c035e0559c225bc5056b6172c0398fd7fe7d2d49b5"},
+    {file = "openvino_genai-2025.1.0.0-cp310-cp310-manylinux_2_31_aarch64.whl", hash = "sha256:1b1465da9e49ab3879a5b2548398777778ecbc72a1f518456608d24b094cadcf"},
+    {file = "openvino_genai-2025.1.0.0-cp310-cp310-win_amd64.whl", hash = "sha256:587a3bbb39fed62338b5914116744f292e8ae33e28b45a937e22546dc7566fcb"},
+    {file = "openvino_genai-2025.1.0.0-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:fb679da6973dd4444b8351c0ceeff4b9014bc0be77d5ec41a073172bdd720255"},
+    {file = "openvino_genai-2025.1.0.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:2e5ad44ab6680a8f0b9d70a7c108c02503a72e0d307441c309d1ae8e93f48bc2"},
+    {file = "openvino_genai-2025.1.0.0-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:e70160a895fd23d768bf64f63178fbe2db1dcc71dcd30c8f34f2306beeadcf21"},
+    {file = "openvino_genai-2025.1.0.0-cp311-cp311-manylinux_2_31_aarch64.whl", hash = "sha256:b4ae2b56db939aa747bcc8762c03acd1a5ca30a2b8a9347c36fb425c9a713b8c"},
+    {file = "openvino_genai-2025.1.0.0-cp311-cp311-win_amd64.whl", hash = "sha256:c18a014fd65951952f1715ec483c8bcb18057446906b7338463e13fa54dfb177"},
+    {file = "openvino_genai-2025.1.0.0-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:920d0251cfb46a242974572cdae9c4734edb503d7f036573d6e25eb3f0b99a4e"},
+    {file = "openvino_genai-2025.1.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:a94861ad09e8385b79712fcb50c22c60c5bbfc55369310c86c1443a23a3f5aea"},
+    {file = "openvino_genai-2025.1.0.0-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:3a302c39a58bf78e0ce62f1ccff95ddd2a27d02f59598a67c6f0d601d9680bde"},
+    {file = "openvino_genai-2025.1.0.0-cp312-cp312-manylinux_2_31_aarch64.whl", hash = "sha256:e4f18321c76dc36d25d6652350181277140d2161ea9e51d5038d1251586e7e90"},
+    {file = "openvino_genai-2025.1.0.0-cp312-cp312-win_amd64.whl", hash = "sha256:f9593fa7730efecda4643a6cc7c502382050a3ef83a6c1f5fed9ca7237ce253f"},
+    {file = "openvino_genai-2025.1.0.0-cp313-cp313-macosx_10_15_x86_64.whl", hash = "sha256:bd737fa4cebc4a1e14b9b44d9648e9f08e6cc2a0738de4f4825ead08eabaa92c"},
+    {file = "openvino_genai-2025.1.0.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:fe965c4fdb56578b5ad9517d657848e23693bb9e22fce5eb00057b96d82eff28"},
+    {file = "openvino_genai-2025.1.0.0-cp313-cp313-manylinux2014_x86_64.whl", hash = "sha256:85d8dbd59e2682531e2af2ae053055d46962bc0425c66770217c5968b69afa51"},
+    {file = "openvino_genai-2025.1.0.0-cp313-cp313-manylinux_2_31_aarch64.whl", hash = "sha256:cfd8c6873d2d509f09913060dad4f2276aa8734746e4c95d7e220592ef754fc5"},
+    {file = "openvino_genai-2025.1.0.0-cp313-cp313-win_amd64.whl", hash = "sha256:b19ca0750eb0ecde23daa0fb4c4f6b159df9dc70cf920e0050f52ced2cf86d28"},
+    {file = "openvino_genai-2025.1.0.0-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:30fa03382ff155b388380cf21e994e204fe26fdee1cc7fa848a5d8e29f3dca83"},
+    {file = "openvino_genai-2025.1.0.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:265a07e7749ea9520f721b6b9553c4ff55ac71209014576e74b6abe7ccd08b8f"},
+    {file = "openvino_genai-2025.1.0.0-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:458047af5a5cbc503cff2689b10586b77e22da4bb74ad1bff0d708a45b76a39c"},
+    {file = "openvino_genai-2025.1.0.0-cp39-cp39-manylinux_2_31_aarch64.whl", hash = "sha256:a8f908f5dda0426c46ba296dfe3224d98cb8b2749db4f5b46d036044b1b06e68"},
+    {file = "openvino_genai-2025.1.0.0-cp39-cp39-win_amd64.whl", hash = "sha256:fcce32dd3586b33fda7c87e2811e7d9009c126e414e55086da208dc7bf06ccb7"},
+]
+
+[package.dependencies]
+openvino_tokenizers = "==2025.1.*"
+
+[package.extras]
+testing = ["pytest (>=6.0)"]
+
+[[package]]
+name = "openvino-telemetry"
+version = "2025.1.0"
+description = "OpenVINO™ Telemetry package for sending statistics with user's consent, used in combination with other OpenVINO™ packages."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "openvino_telemetry-2025.1.0-py3-none-any.whl", hash = "sha256:5bee18ce3bc8f287def5bfa4c73205417d4c5f281da6932486c2877558c712b3"},
+    {file = "openvino_telemetry-2025.1.0.tar.gz", hash = "sha256:12a2b04cd18e83cc3d818b9fff54274922e19eca2434616b8f3eb2904a9cb43a"},
+]
+
+[[package]]
+name = "openvino-tokenizers"
+version = "2025.1.0.0"
+description = "Convert tokenizers into OpenVINO models"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "openvino_tokenizers-2025.1.0.0-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:9fa463cbc9727e45af5ab9388dece8ac2a9cabec901aea43588758f730d0a52b"},
+    {file = "openvino_tokenizers-2025.1.0.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:a0407175e847a791d9659b0c91edb6697652221c1e29c0095807d5fe4f3952f0"},
+    {file = "openvino_tokenizers-2025.1.0.0-py3-none-manylinux2014_x86_64.whl", hash = "sha256:0bbbaf9abaa203e7d00cf6aec331464c65f46a1d7f3f101082d41a54b6159f4d"},
+    {file = "openvino_tokenizers-2025.1.0.0-py3-none-manylinux_2_31_aarch64.whl", hash = "sha256:5faa49e0616aee7ae01fef610d70f2d3077e4b6d74fc688c642af887df061bb8"},
+    {file = "openvino_tokenizers-2025.1.0.0-py3-none-win_amd64.whl", hash = "sha256:efbf5da395678e7f9fe24ed327f9ef7f0f331ae71e5eee811c7e3df964ff4edf"},
+]
+
+[package.dependencies]
+openvino = "==2025.1.*"
+
+[package.extras]
+all = ["openvino_tokenizers[dev,transformers]"]
+benchmark = ["openvino_tokenizers[transformers]", "pandas", "seaborn", "tqdm"]
+dev = ["bandit", "jinja2", "openvino_tokenizers[transformers]", "pandas", "pytest", "pytest_harvest", "ruff"]
+fuzzing = ["atheris", "openvino_tokenizers[transformers]"]
+transformers = ["tiktoken", "transformers[sentencepiece] (>=4.36.0)"]
 
 [[package]]
 name = "orjson"
@@ -1112,4 +1230,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "91a2ae4195547d644d1c5ef8777e91be44ee669459b37ee3cd689f6feb161e28"
+content-hash = "efec5381fd7e9dc3859125ed48b48efdde4462606dfa5a8b3510b13c2dcd478c"
