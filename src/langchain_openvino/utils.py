@@ -5,6 +5,7 @@ import numpy as np
 import openvino as ov
 import openvino_genai as ov_genai
 
+core = ov.Core()
 
 class OpenVINOStreamer(ov_genai.StreamerBase):
     """OpenVINO streamer for token-by-token generation."""
@@ -18,7 +19,7 @@ class OpenVINOStreamer(ov_genai.StreamerBase):
         """
         super().__init__()
         self.tokenizer = tokenizer
-        self.detok = ov.Core.compile_model(detok_path, "CPU")
+        self.detok = core.compile_model(detok_path, "CPU")
         self.q = Queue()
         self.stop = object()
     
