@@ -1,6 +1,6 @@
 # OpenVINO LangChain Integration
 
-This project integrates LangChain with OpenVINO GenAI to enable efficient local inference using OpenVINO-optimized large language models.
+This project integrates LangChain with OpenVINO GenAI to enable efficient local inference.
 
 ## Features
 
