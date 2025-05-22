@@ -19,8 +19,6 @@ cd openvino-langchain
 # Install dependencies
 poetry install
 
-# Activate the virtual environment
-poetry shell
 ```
 
 ### Dependencies
