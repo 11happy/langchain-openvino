@@ -50,6 +50,11 @@ llm = ChatOpenVINO(
 messages = [HumanMessage(content="Hello, how are you?")]
 response = llm.invoke(messages)
 print(response.content)
+
+# Streaming Usage
+for chunk in llm.stream("explain neural networks in simple terms"):
+    print(chunk.content, end="", flush=True)
+    
 ```
 
 ### Configuration Parameters
@@ -61,3 +66,4 @@ print(response.content)
 - `top_k` (int): Top-k sampling parameter (default: 50)
 - `top_p` (float): Top-p (nucleus) sampling parameter (default: 0.95)
 - `do_sample` (bool): Whether to use sampling (default: True)
+
