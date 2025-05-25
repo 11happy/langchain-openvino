@@ -16,7 +16,7 @@ from langchain_core.messages.ai import UsageMetadata
 from pydantic import Field
 from pydantic import PrivateAttr
 
-from utils import OpenVINOStreamer
+from .utils import ChunkStreamer
 
 
 class ChatOpenVINO(BaseChatModel):
@@ -38,8 +38,8 @@ class ChatOpenVINO(BaseChatModel):
     def _generate(
         self,
         messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
         run_manager: Optional[CallbackManagerForLLMRun] = None,
+        stop: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> ChatResult:
         """Generate a response to the given messages."""
@@ -60,12 +60,29 @@ class ChatOpenVINO(BaseChatModel):
     def _stream(
         self,
         messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
         run_manager: Optional[CallbackManagerForLLMRun] = None,
+        stop: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> Iterator[ChatGenerationChunk]:
         """Stream the response to the given messages."""
-    
+        msg = messages[-1].content
+        configuration = self._pipeline.get_generation_config()
+        configuration.max_new_tokens = kwargs.get("max_tokens", self.max_tokens)
+        configuration.temperature = kwargs.get("temperature", self.temperature)
+        configuration.top_k = kwargs.get("top_k", self.top_k)
+        configuration.top_p = kwargs.get("top_p", self.top_p)
+        configuration.do_sample = kwargs.get("do_sample", self.do_sample)
+        tokens_len = kwargs.get("tokens_len", 10)
+        token_streamer = ChunkStreamer(self._pipeline.get_tokenizer(), tokens_len=tokens_len)
+        def generate():
+            self._pipeline.generate(msg, configuration, token_streamer)
+        generation_thread = Thread(target=generate, daemon=True)
+        generation_thread.start()
+        for token_chunk in token_streamer:
+            if run_manager:
+                run_manager.on_llm_new_token(token_chunk)
+            yield ChatGenerationChunk(message=AIMessageChunk(content=token_chunk))
+        generation_thread.join()        
     @property
     def _llm_type(self) -> str:
         """Identifier."""
