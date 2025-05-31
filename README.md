@@ -54,7 +54,13 @@ print(response.content)
 # Streaming Usage
 for chunk in llm.stream("explain neural networks in simple terms"):
     print(chunk.content, end="", flush=True)
-    
+   
+```
+
+#### Testing
+```
+# Testing
+poetry run pytest --disable-socket --allow-unix-socket --asyncio-mode=auto tests/unit_tests
 ```
 
 ### Configuration Parameters
