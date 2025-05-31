@@ -6,7 +6,7 @@ from src.langchain_openvino.utils import get_model_name
 from langchain_core.messages import (
     BaseMessageChunk,
 )
-from openvino import compile_model, save_model
+from openvino import save_model
 from openvino_tokenizers import convert_tokenizer
 model = OVModelForCausalLM.from_pretrained("gpt2", export=True)
 model.save_pretrained("ov_model")

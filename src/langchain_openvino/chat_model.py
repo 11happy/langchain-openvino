@@ -1,21 +1,12 @@
 from typing import Any, Dict, List, Optional, Iterator
-from queue import Queue
 from threading import Thread
-from time import perf_counter
-from pathlib import Path
-
-import numpy as np
-import openvino as ov
+import os
 import openvino_genai as ov_genai
-
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, AIMessageChunk
 from langchain_core.outputs import ChatGeneration, ChatResult, ChatGenerationChunk
 from langchain_core.callbacks import CallbackManagerForLLMRun
-from langchain_core.messages.ai import UsageMetadata
-from pydantic import Field
 from pydantic import PrivateAttr
-
 from .utils import ChunkStreamer, get_model_name
 
 
@@ -33,7 +24,14 @@ class ChatOpenVINO(BaseChatModel):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device)
+        if not os.path.exists(self.model_path):
+            raise FileNotFoundError(f"Provided model path does not exist: {self.model_path}")
+        if not os.path.isdir(self.model_path):
+            raise NotADirectoryError(f"Model path must be a directory: {self.model_path}")
+        try:
+            self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device)
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize OpenVINO pipeline: {e}")
     
     def _generate(
         self,
@@ -43,17 +41,20 @@ class ChatOpenVINO(BaseChatModel):
         **kwargs: Any,
     ) -> ChatResult:
         """Generate a response to the given messages."""
+        if not messages or not messages[-1].content:
+            raise ValueError("No input message provided for generation.")
         msg = messages[-1].content
-        
-        resp = self._pipeline.generate(
-            msg, 
-            max_new_tokens=kwargs.get("max_tokens", self.max_tokens),
-            temperature=kwargs.get("temperature", self.temperature),
-            top_k=kwargs.get("top_k", self.top_k),
-            top_p=kwargs.get("top_p", self.top_p),
-            do_sample=kwargs.get("do_sample", self.do_sample),
-        )
-
+        try:
+            resp = self._pipeline.generate(
+                msg, 
+                max_new_tokens=kwargs.get("max_tokens", self.max_tokens),
+                temperature=kwargs.get("temperature", self.temperature),
+                top_k=kwargs.get("top_k", self.top_k),
+                top_p=kwargs.get("top_p", self.top_p),
+                do_sample=kwargs.get("do_sample", self.do_sample),
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to generate response: {e}")
         gen = ChatGeneration(message=AIMessage(content=resp))
         return ChatResult(generations=[gen])
 
@@ -73,11 +74,17 @@ class ChatOpenVINO(BaseChatModel):
         configuration.top_p = kwargs.get("top_p", self.top_p)
         configuration.do_sample = kwargs.get("do_sample", self.do_sample)
         tokens_len = kwargs.get("tokens_len", 10)
-        token_streamer = ChunkStreamer(self._pipeline.get_tokenizer(), tokens_len=tokens_len)
+        try:
+            token_streamer = ChunkStreamer(self._pipeline.get_tokenizer(), tokens_len=tokens_len)
+        except Exception as e:
+            raise RuntimeError(f"Failed to create token streamer: {e}")
         def generate():
             self._pipeline.generate(msg, configuration, token_streamer)
         generation_thread = Thread(target=generate, daemon=True)
-        generation_thread.start()
+        try:
+            generation_thread.start()
+        except Exception as e:
+            raise RuntimeError(f"Failed to start generation thread: {e}")
         for token_chunk in token_streamer:
             if run_manager:
                 run_manager.on_llm_new_token(token_chunk)

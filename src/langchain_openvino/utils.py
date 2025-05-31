@@ -1,7 +1,5 @@
-import argparse
 import openvino_genai
 import queue
-import threading
 import json
 import os
 from typing import Union
