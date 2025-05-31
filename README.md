@@ -59,8 +59,11 @@ for chunk in llm.stream("explain neural networks in simple terms"):
 
 #### Testing
 ```
-# Testing
+# Unit Testing
 poetry run pytest --disable-socket --allow-unix-socket --asyncio-mode=auto tests/unit_tests
+
+# Integration Testing
+poetry run pytest --disable-socket --allow-unix-socket --asyncio-mode=auto tests/integration_tests
 ```
 
 ### Configuration Parameters
