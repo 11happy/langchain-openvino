@@ -28,11 +28,31 @@ class ChatOpenVINO(BaseChatModel):
             raise FileNotFoundError(f"Provided model path does not exist: {self.model_path}")
         if not os.path.isdir(self.model_path):
             raise NotADirectoryError(f"Model path must be a directory: {self.model_path}")
+        self._validate_parameters()
         try:
             self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device)
         except Exception as e:
             raise RuntimeError(f"Failed to initialize OpenVINO pipeline: {e}")
-    
+        
+    def _validate_parameters(self):
+        if not (0.0 <= self.temperature <= 2.0):
+            raise ValueError(f"temperature must be in [0.0, 2.0], got {self.temperature}")
+
+        if not (0.0 <= self.top_p <= 1.0):
+            raise ValueError(f"top_p must be in [0.0, 1.0], got {self.top_p}")
+
+        if not isinstance(self.top_k, int) or self.top_k < 0:
+            raise ValueError(f"top_k must be a non-negative integer, got {self.top_k}")
+
+        if not isinstance(self.max_tokens, int) or self.max_tokens <= 0:
+            raise ValueError(f"max_tokens must be a positive integer, got {self.max_tokens}")
+
+        if self.device not in {"CPU", "GPU", "NPU"}:
+            raise ValueError(f"Unsupported device: {self.device}. Supported: CPU, GPU, NPU")
+
+        if not isinstance(self.do_sample, bool):
+            raise TypeError(f"do_sample must be a boolean, got {type(self.do_sample).__name__}")
+
     def _generate(
         self,
         messages: List[BaseMessage],
