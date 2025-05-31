@@ -2,6 +2,7 @@ from typing import Type
 import pytest
 from src.langchain_openvino.chat_model import ChatOpenVINO
 from langchain_tests.unit_tests import ChatModelUnitTests
+from src.langchain_openvino.utils import get_model_name
 
 
 class TestChatOpenVINOLinkUnit(ChatModelUnitTests):
@@ -12,7 +13,8 @@ class TestChatOpenVINOLinkUnit(ChatModelUnitTests):
     @property
     def chat_model_params(self) -> dict:
         return {
-           "model_path": r"sample_model\newov_model",
+           "model_name": get_model_name(r"D:\newov_model"),
+           "model_path": r"D:\newov_model",
            "device": "CPU",
            "max_tokens": 256,
            "temperature": 1.0,
@@ -22,11 +24,12 @@ class TestChatOpenVINOLinkUnit(ChatModelUnitTests):
         }
     
 def test_sample_chat_openvino():
-    model = ChatOpenVINO(model_path=r"sample_model\newov_model")
+    model = ChatOpenVINO(model_path=r"D:\newov_model")
     assert model is not None
     assert model._llm_type == "openvino-llm"
     assert model._identifying_params == {
-        "model_path": r"sample_model\newov_model",
+        "model_name": get_model_name(r"D:\newov_model"),
+        "model_path": r"D:\newov_model",
         "device": "CPU",
         "max_tokens": 256,
         "temperature": 1.0,

@@ -16,7 +16,7 @@ from langchain_core.messages.ai import UsageMetadata
 from pydantic import Field
 from pydantic import PrivateAttr
 
-from .utils import ChunkStreamer
+from .utils import ChunkStreamer, get_model_name
 
 
 class ChatOpenVINO(BaseChatModel):
@@ -92,6 +92,7 @@ class ChatOpenVINO(BaseChatModel):
     def _identifying_params(self) -> Dict[str, Any]:
         """Return identifying parameters."""
         return {
+            "model_name": get_model_name(self.model_path),
             "model_path": self.model_path,
             "device": self.device,
             "max_tokens": self.max_tokens,

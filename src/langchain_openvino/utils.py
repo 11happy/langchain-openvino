@@ -2,6 +2,8 @@ import argparse
 import openvino_genai
 import queue
 import threading
+import json
+import os
 from typing import Union
 
 class IterableStreamer(openvino_genai.StreamerBase):
@@ -164,3 +166,24 @@ class ChunkStreamer(IterableStreamer):
             self.decoded_lengths.append(-2)
 
         return openvino_genai.StreamingStatus.RUNNING
+    
+
+def get_model_name(model_path: str) -> str:
+    """
+    Extracts the model name from the given model path.
+
+    Args:
+        model_path (str): The path to the model.
+
+    Returns:
+        str: The name of the model.
+    """
+    config_path = os.path.join(model_path, "config.json")
+    
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"No config.json found in {model_path}")
+    
+    with open(config_path, "r", encoding="utf-8") as f:
+        config = json.load(f)
+
+    return config.get("_name_or_path", None)
