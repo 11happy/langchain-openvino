@@ -20,6 +20,7 @@ class ChatOpenVINO(BaseChatModel):
     top_k: int = 50
     top_p: float = 0.95
     do_sample: bool = True
+    draft_model_path: Optional[str] = None
     _pipeline: Any = PrivateAttr()
     
     def __init__(self, **kwargs):
@@ -30,7 +31,15 @@ class ChatOpenVINO(BaseChatModel):
             raise NotADirectoryError(f"Model path must be a directory: {self.model_path}")
         self._validate_parameters()
         try:
-            self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device)
+            if self.draft_model_path:
+                if not os.path.exists(self.draft_model_path):
+                    raise FileNotFoundError(f"Draft model path does not exist: {self.draft_model_path}")
+                if not os.path.isdir(self.draft_model_path):
+                    raise NotADirectoryError(f"Draft model path must be a directory: {self.draft_model_path}")
+                draft_model = ov_genai.draft_model(self.draft_model_path, self.device)
+                self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device, draft_model=draft_model)
+            else:
+                self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device)
         except Exception as e:
             raise RuntimeError(f"Failed to initialize OpenVINO pipeline: {e}")
         
@@ -52,7 +61,17 @@ class ChatOpenVINO(BaseChatModel):
 
         if not isinstance(self.do_sample, bool):
             raise TypeError(f"do_sample must be a boolean, got {type(self.do_sample).__name__}")
-
+    
+    def _prepare_generation_config(self, **kwargs: Any):
+        config = self._pipeline.get_generation_config()
+        config.max_new_tokens = kwargs.get("max_tokens", self.max_tokens)
+        config.temperature = kwargs.get("temperature", self.temperature)
+        config.top_k = kwargs.get("top_k", self.top_k)
+        config.top_p = kwargs.get("top_p", self.top_p)
+        config.do_sample = kwargs.get("do_sample", self.do_sample)
+        if self.draft_model_path:
+            config.num_assistant_tokens = kwargs.get("num_assistant_tokens", 5)
+        return config
     def _generate(
         self,
         messages: List[BaseMessage],
@@ -64,14 +83,11 @@ class ChatOpenVINO(BaseChatModel):
         if not messages or not messages[-1].content:
             raise ValueError("No input message provided for generation.")
         msg = messages[-1].content
+        configuration = self._prepare_generation_config(**kwargs)
         try:
             resp = self._pipeline.generate(
                 msg, 
-                max_new_tokens=kwargs.get("max_tokens", self.max_tokens),
-                temperature=kwargs.get("temperature", self.temperature),
-                top_k=kwargs.get("top_k", self.top_k),
-                top_p=kwargs.get("top_p", self.top_p),
-                do_sample=kwargs.get("do_sample", self.do_sample),
+                configuration,
             )
         except Exception as e:
             raise RuntimeError(f"Failed to generate response: {e}")
@@ -87,12 +103,7 @@ class ChatOpenVINO(BaseChatModel):
     ) -> Iterator[ChatGenerationChunk]:
         """Stream the response to the given messages."""
         msg = messages[-1].content
-        configuration = self._pipeline.get_generation_config()
-        configuration.max_new_tokens = kwargs.get("max_tokens", self.max_tokens)
-        configuration.temperature = kwargs.get("temperature", self.temperature)
-        configuration.top_k = kwargs.get("top_k", self.top_k)
-        configuration.top_p = kwargs.get("top_p", self.top_p)
-        configuration.do_sample = kwargs.get("do_sample", self.do_sample)
+        configuration = self._prepare_generation_config(**kwargs)
         tokens_len = kwargs.get("tokens_len", 10)
         try:
             token_streamer = ChunkStreamer(self._pipeline.get_tokenizer(), tokens_len=tokens_len)
