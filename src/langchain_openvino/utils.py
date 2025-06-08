@@ -4,6 +4,8 @@ import json
 import os
 from typing import Union
 
+REPLACEMENT_CHAR = chr(65533)  # Unicode replacement character for invalid UTF-8 sequences
+
 class IterableStreamer(openvino_genai.StreamerBase):
     """
     A custom streamer class for handling token streaming and detokenization with buffering.
@@ -69,7 +71,7 @@ class IterableStreamer(openvino_genai.StreamerBase):
         """
         self.text_queue.put(word)
 
-    def write(self, token: Union[int, list[int]]) -> openvino_genai.StreamingStatus:
+    def write(self, token: Union[int, list[int]], delay_n_tokens: int = 3) -> openvino_genai.StreamingStatus:
         """
         Processes a token and manages the decoding buffer. Adds decoded text to the queue.
 
@@ -89,14 +91,13 @@ class IterableStreamer(openvino_genai.StreamerBase):
         self.decoded_lengths.append(len(text))
 
         word = ""
-        delay_n_tokens = 3
         if len(text) > self.print_len and "\n" == text[-1]:
             # Flush the cache after the new line symbol.
             word = text[self.print_len :]
             self.tokens_cache = []
             self.decoded_lengths = []
             self.print_len = 0
-        elif len(text) > 0 and text[-1] == chr(65533):
+        elif len(text) > 0 and text[-1] == REPLACEMENT_CHAR:
             # Don't print incomplete text.
             self.decoded_lengths[-1] = -1
         elif len(self.tokens_cache) >= delay_n_tokens:
@@ -126,13 +127,13 @@ class IterableStreamer(openvino_genai.StreamerBase):
         cache_for_position = self.tokens_cache[: cache_position + 1]
         text_for_position = self.tokenizer.decode(cache_for_position)
 
-        if len(text_for_position) > 0 and text_for_position[-1] == chr(65533):
+        if len(text_for_position) > 0 and text_for_position[-1] == REPLACEMENT_CHAR:
             # Mark text as incomplete
             self.decoded_lengths[cache_position] = -1
         else:
             self.decoded_lengths[cache_position] = len(text_for_position)
 
-    def end(self):
+    def end(self) -> openvino_genai.StreamingStatus:
         """
         Flushes residual tokens from the buffer and puts a None value in the queue to signal the end.
         """
@@ -143,6 +144,8 @@ class IterableStreamer(openvino_genai.StreamerBase):
             self.tokens_cache = []
             self.print_len = 0
         self.text_queue.put(None)
+        return openvino_genai.StreamingStatus.STOP
+
 
 
 class ChunkStreamer(IterableStreamer):
@@ -180,8 +183,10 @@ def get_model_name(model_path: str) -> str:
     
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"No config.json found in {model_path}")
-    
-    with open(config_path, "r", encoding="utf-8") as f:
-        config = json.load(f)
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+    except json.JSONDecodeError:
+        return "placeholder_model_name"
 
-    return config.get("_name_or_path", None)
+    return config.get("_name_or_path", "placeholder_model_name")
