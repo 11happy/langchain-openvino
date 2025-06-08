@@ -3,6 +3,7 @@ import queue
 import json
 import os
 from typing import Union
+from pydantic import BaseModel, Field, field_validator
 
 REPLACEMENT_CHAR = chr(65533)  # Unicode replacement character for invalid UTF-8 sequences
 
@@ -190,3 +191,39 @@ def get_model_name(model_path: str) -> str:
         return "placeholder_model_name"
 
     return config.get("_name_or_path", "placeholder_model_name")
+
+class _ParametersModel(BaseModel):
+    temperature: float = Field(..., ge=0.0, le=2.0)
+    top_p: float = Field(..., ge=0.0, le=1.0)
+    top_k: int = Field(..., ge=0)
+    max_tokens: int = Field(..., gt=0)
+    device: str
+    do_sample: bool
+
+    @field_validator("device")
+    def validate_device(cls, v):
+        if v not in {"CPU", "GPU", "NPU"}:
+            raise ValueError(f"Unsupported device: {v}. Supported: CPU, GPU, NPU")
+        return v
+
+def validate_parameters(temperature: float, top_p: float, top_k: int, max_tokens: int, device: str, do_sample: bool):
+    """
+    Validates the parameters for OpenVINO chat models.
+
+    Args:
+        temperature (float): Temperature for sampling.
+        top_p (float): Top-p sampling parameter.
+        top_k (int): Top-k sampling parameter.
+        max_tokens (int): Maximum number of tokens to generate.
+        device (str): Device to run the model on.
+        do_sample (bool): Whether to use sampling.
+
+    """
+    _ParametersModel(
+        temperature=temperature,
+        top_p=top_p,
+        top_k=top_k,
+        max_tokens=max_tokens,
+        device=device,
+        do_sample=do_sample
+    )

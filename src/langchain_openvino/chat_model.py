@@ -7,7 +7,7 @@ from langchain_core.messages import AIMessage, BaseMessage, AIMessageChunk
 from langchain_core.outputs import ChatGeneration, ChatResult, ChatGenerationChunk
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from pydantic import PrivateAttr
-from .utils import ChunkStreamer, get_model_name
+from .utils import ChunkStreamer, get_model_name, validate_parameters
 
 
 class ChatOpenVINO(BaseChatModel):
@@ -44,24 +44,15 @@ class ChatOpenVINO(BaseChatModel):
             raise RuntimeError(f"Failed to initialize OpenVINO pipeline: {e}")
         
     def _validate_parameters(self):
-        if not (0.0 <= self.temperature <= 2.0):
-            raise ValueError(f"temperature must be in [0.0, 2.0], got {self.temperature}")
-
-        if not (0.0 <= self.top_p <= 1.0):
-            raise ValueError(f"top_p must be in [0.0, 1.0], got {self.top_p}")
-
-        if not isinstance(self.top_k, int) or self.top_k < 0:
-            raise ValueError(f"top_k must be a non-negative integer, got {self.top_k}")
-
-        if not isinstance(self.max_tokens, int) or self.max_tokens <= 0:
-            raise ValueError(f"max_tokens must be a positive integer, got {self.max_tokens}")
-
-        if self.device not in {"CPU", "GPU", "NPU"}:
-            raise ValueError(f"Unsupported device: {self.device}. Supported: CPU, GPU, NPU")
-
-        if not isinstance(self.do_sample, bool):
-            raise TypeError(f"do_sample must be a boolean, got {type(self.do_sample).__name__}")
-    
+        validate_parameters(
+            temperature=self.temperature,
+            top_p=self.top_p,
+            top_k=self.top_k,
+            max_tokens=self.max_tokens,
+            device=self.device,
+            do_sample=self.do_sample
+        )
+        
     def _prepare_generation_config(self, **kwargs: Any):
         config = self._pipeline.get_generation_config()
         config.max_new_tokens = kwargs.get("max_tokens", self.max_tokens)
