@@ -46,4 +46,4 @@ def test_compare_with_hf():
     print(f"HF Output: {hf_output}")
     print(f"OV Output: {ov_output}")
     assert hf_output == ov_output
-    shutil.rmtree(MODEL_PATH, ignore_errors=True)
+    shutil.rmtree(str(MODEL_PATH), ignore_errors=True)
