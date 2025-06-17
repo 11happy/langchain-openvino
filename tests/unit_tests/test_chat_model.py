@@ -63,3 +63,18 @@ def test_speculative_chat_openvino():
     }
     response = model.invoke("Hello, world!")
     assert response is not None
+
+def test_model_with_method_chaining():
+    model = ChatOpenVINO(model_path=str(MODEL_PATH))
+    assert model is not None
+    assert model._llm_type == "openvino-llm"
+    model = (model.with_temperature(0.7)
+             .with_top_p(0.9)
+             .with_top_k(40)
+             .with_max_tokens(128))
+    assert model.temperature == 0.7
+    assert model.top_p == 0.9
+    assert model.top_k == 40
+    assert model.max_tokens == 128
+    response = model.invoke("Hello, world!")
+    assert response is not None

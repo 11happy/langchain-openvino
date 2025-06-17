@@ -52,7 +52,30 @@ class ChatOpenVINO(BaseChatModel):
             device=self.device,
             do_sample=self.do_sample
         )
-        
+    def with_temperature(self, temperature: float):
+        self.temperature = temperature
+        self._validate_parameters()
+        return self
+    def with_top_p(self, top_p: float):
+        self.top_p = top_p
+        self._validate_parameters()
+        return self
+    def with_top_k(self, top_k: int):
+        self.top_k = top_k
+        self._validate_parameters()
+        return self
+    def with_max_tokens(self, max_tokens: int):
+        self.max_tokens = max_tokens
+        self._validate_parameters()
+        return self
+    def with_do_sample(self, do_sample: bool):
+        self.do_sample = do_sample
+        self._validate_parameters()
+        return self
+    def with_device(self, device: str):
+        self.device = device
+        self._validate_parameters()
+        return self
     def _prepare_generation_config(self, **kwargs: Any):
         config = self._pipeline.get_generation_config()
         config.max_new_tokens = kwargs.get("max_tokens", self.max_tokens)
@@ -63,6 +86,7 @@ class ChatOpenVINO(BaseChatModel):
         if self.draft_model_path:
             config.num_assistant_tokens = kwargs.get("num_assistant_tokens", 5)
         return config
+
     def _generate(
         self,
         messages: List[BaseMessage],
