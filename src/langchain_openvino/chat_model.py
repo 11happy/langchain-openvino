@@ -21,6 +21,8 @@ class ChatOpenVINO(BaseChatModel):
     top_p: float = 0.95
     do_sample: bool = True
     draft_model_path: Optional[str] = None
+    adapter_path: Optional[str] = None
+    adapter_alpha: float = 0.75
     _pipeline: Any = PrivateAttr()
     
     def __init__(self, **kwargs):
@@ -38,6 +40,12 @@ class ChatOpenVINO(BaseChatModel):
                     raise NotADirectoryError(f"Draft model path must be a directory: {self.draft_model_path}")
                 draft_model = ov_genai.draft_model(self.draft_model_path, self.device)
                 self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device, draft_model=draft_model)
+            elif self.adapter_path:
+                if not os.path.exists(self.adapter_path):
+                    raise FileNotFoundError(f"Adapter path does not exist: {self.adapter_path}")
+                adapter = ov_genai.Adapter(self.adapter_path)
+                adapter_config = ov_genai.AdapterConfig(adapter)
+                self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device, adapter=adapter_config)
             else:
                 self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device)
         except Exception as e:
@@ -85,6 +93,8 @@ class ChatOpenVINO(BaseChatModel):
         config.do_sample = kwargs.get("do_sample", self.do_sample)
         if self.draft_model_path:
             config.num_assistant_tokens = kwargs.get("num_assistant_tokens", 5)
+        if self.adapter_path:
+            config.adapters = ov_genai.AdapterConfig((ov_genai.Adapter(self.adapter_path), self.adapter_alpha))
         return config
 
     def _generate(
