@@ -58,7 +58,17 @@ for chunk in llm.stream("explain neural networks in simple terms"):
 ```
 
 #### Testing
+##### Downloading Sample/Test Models:
+To run inference, you need to download an OpenVINO-compatible model:
+```bash
+# Sample model
+huggingface-cli download OpenVINO/Qwen3-0.6B-int8-ov --local-dir models
+
 ```
+> Make sure to configure the model path and model name in the test files
+(e.g., tests/unit_tests/test_chat_model.py, similarly for integration tests).
+
+```bash
 # Unit Testing
 poetry run pytest --disable-socket --allow-unix-socket --asyncio-mode=auto tests/unit_tests
 
