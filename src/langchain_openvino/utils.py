@@ -7,7 +7,10 @@ import numpy as np
 from typing import Union
 from pydantic import BaseModel, Field, field_validator
 
-REPLACEMENT_CHAR = chr(65533)  # Unicode replacement character for invalid UTF-8 sequences
+REPLACEMENT_CHAR = chr(
+    65533
+)  # Unicode replacement character for invalid UTF-8 sequences
+
 
 class IterableStreamer(openvino_genai.StreamerBase):
     """
@@ -74,7 +77,9 @@ class IterableStreamer(openvino_genai.StreamerBase):
         """
         self.text_queue.put(word)
 
-    def write(self, token: Union[int, list[int]], delay_n_tokens: int = 3) -> openvino_genai.StreamingStatus:
+    def write(
+        self, token: Union[int, list[int]], delay_n_tokens: int = 3
+    ) -> openvino_genai.StreamingStatus:
         """
         Processes a token and manages the decoding buffer. Adds decoded text to the queue.
 
@@ -150,9 +155,7 @@ class IterableStreamer(openvino_genai.StreamerBase):
         return openvino_genai.StreamingStatus.STOP
 
 
-
 class ChunkStreamer(IterableStreamer):
-
     def __init__(self, tokenizer, tokens_len):
         super().__init__(tokenizer)
         self.tokens_len = tokens_len
@@ -170,7 +173,7 @@ class ChunkStreamer(IterableStreamer):
             self.decoded_lengths.append(-2)
 
         return openvino_genai.StreamingStatus.RUNNING
-    
+
 
 def get_model_name(model_path: str) -> str:
     """
@@ -183,7 +186,7 @@ def get_model_name(model_path: str) -> str:
         str: The name of the model.
     """
     config_path = os.path.join(model_path, "config.json")
-    
+
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"No config.json found in {model_path}")
     try:
@@ -193,6 +196,7 @@ def get_model_name(model_path: str) -> str:
         return "placeholder_model_name"
 
     return config.get("_name_or_path", "placeholder_model_name")
+
 
 class _ParametersModel(BaseModel):
     temperature: float = Field(..., ge=0.0, le=2.0)
@@ -208,7 +212,15 @@ class _ParametersModel(BaseModel):
             raise ValueError(f"Unsupported device: {v}. Supported: CPU, GPU, NPU")
         return v
 
-def validate_parameters(temperature: float, top_p: float, top_k: int, max_tokens: int, device: str, do_sample: bool):
+
+def validate_parameters(
+    temperature: float,
+    top_p: float,
+    top_k: int,
+    max_tokens: int,
+    device: str,
+    do_sample: bool,
+):
     """
     Validates the parameters for OpenVINO chat models.
 
@@ -227,27 +239,36 @@ def validate_parameters(temperature: float, top_p: float, top_k: int, max_tokens
         top_k=top_k,
         max_tokens=max_tokens,
         device=device,
-        do_sample=do_sample
+        do_sample=do_sample,
     )
+
+
 def decrypt_model(model_dir, model_file_name, weights_file_name):
-    with open(model_dir + '/' + model_file_name, "r") as file:
+    with open(model_dir + "/" + model_file_name, "r") as file:
         model = file.read()
     # decrypt model
 
-    with open(model_dir + '/' + weights_file_name, "rb") as file:
+    with open(model_dir + "/" + weights_file_name, "rb") as file:
         binary_data = file.read()
     # decrypt weights
     weights = np.frombuffer(binary_data, dtype=np.uint8).astype(np.uint8)
 
     return model, Tensor(weights)
 
+
 def read_tokenizer(model_dir):
-    tokenizer_model_name = 'openvino_tokenizer.xml'
-    tokenizer_weights_name = 'openvino_tokenizer.bin'
-    tokenizer_model, tokenizer_weights = decrypt_model(model_dir, tokenizer_model_name, tokenizer_weights_name)
+    tokenizer_model_name = "openvino_tokenizer.xml"
+    tokenizer_weights_name = "openvino_tokenizer.bin"
+    tokenizer_model, tokenizer_weights = decrypt_model(
+        model_dir, tokenizer_model_name, tokenizer_weights_name
+    )
 
-    detokenizer_model_name = 'openvino_detokenizer.xml'
-    detokenizer_weights_name = 'openvino_detokenizer.bin'
-    detokenizer_model, detokenizer_weights = decrypt_model(model_dir, detokenizer_model_name, detokenizer_weights_name)
+    detokenizer_model_name = "openvino_detokenizer.xml"
+    detokenizer_weights_name = "openvino_detokenizer.bin"
+    detokenizer_model, detokenizer_weights = decrypt_model(
+        model_dir, detokenizer_model_name, detokenizer_weights_name
+    )
 
-    return openvino_genai.Tokenizer(tokenizer_model, tokenizer_weights, detokenizer_model, detokenizer_weights)
+    return openvino_genai.Tokenizer(
+        tokenizer_model, tokenizer_weights, detokenizer_model, detokenizer_weights
+    )

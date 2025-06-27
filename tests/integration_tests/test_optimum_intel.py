@@ -38,6 +38,7 @@ def test_invoke():
     response = chat_model.invoke("Hello, world!")
     assert response is not None
 
+
 def test_stream():
     model_path = str(MODEL_PATH)
     chat_model = ChatOpenVINO(
@@ -57,7 +58,10 @@ def test_stream():
         response += chunk.content
     assert response is not None
 
+
 import shutil
+
+
 def test_cleanup():
     model_path = str(MODEL_PATH)
     shutil.rmtree(model_path, ignore_errors=True)

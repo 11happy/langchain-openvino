@@ -15,15 +15,21 @@ def test_compare_with_hf():
     PROMPT = "The capital of France is"
     MAX_NEW_TOKENS = 32
     CUR_DIR = Path(__file__).parent
-    MODEL_PATH =  CUR_DIR.parent.parent / "models" / "temp_ov_model"
+    MODEL_PATH = CUR_DIR.parent.parent / "models" / "temp_ov_model"
     MODEL_PATH.mkdir(parents=True, exist_ok=True)
 
     # hf
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
     model = AutoModelForCausalLM.from_pretrained(MODEL_ID)
-    encoded_input = tokenizer.encode(PROMPT, return_tensors="pt", add_special_tokens=False)
-    hf_output_ids = model.generate(encoded_input, max_new_tokens=MAX_NEW_TOKENS, do_sample=False)
-    hf_output = tokenizer.decode(hf_output_ids[0, encoded_input.shape[1]:], skip_special_tokens=True).strip()
+    encoded_input = tokenizer.encode(
+        PROMPT, return_tensors="pt", add_special_tokens=False
+    )
+    hf_output_ids = model.generate(
+        encoded_input, max_new_tokens=MAX_NEW_TOKENS, do_sample=False
+    )
+    hf_output = tokenizer.decode(
+        hf_output_ids[0, encoded_input.shape[1] :], skip_special_tokens=True
+    ).strip()
 
     # openvino
     ov_model = OVModelForCausalLM.from_pretrained(MODEL_ID, export=True)
