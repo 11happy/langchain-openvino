@@ -78,3 +78,11 @@ def test_model_with_method_chaining():
     assert model.max_tokens == 128
     response = model.invoke("Hello, world!")
     assert response is not None
+
+def test_model_with_prompt_lookup():
+    model = ChatOpenVINO(model_path=str(MODEL_PATH), prompt_lookup=True)
+    assert model is not None
+    assert model._llm_type == "openvino-llm"
+    assert model.prompt_lookup is True
+    response = model.invoke("Hello, world!")
+    assert response is not None

@@ -21,6 +21,7 @@ class ChatOpenVINO(BaseChatModel):
     top_p: float = 0.95
     do_sample: bool = True
     use_encrypted_model: bool = False
+    prompt_lookup: bool = False
     draft_model_path: Optional[str] = None
     adapter_path: Optional[str] = None
     adapter_alpha: float = 0.75
@@ -101,6 +102,9 @@ class ChatOpenVINO(BaseChatModel):
         config.top_k = kwargs.get("top_k", self.top_k)
         config.top_p = kwargs.get("top_p", self.top_p)
         config.do_sample = kwargs.get("do_sample", self.do_sample)
+        if self.prompt_lookup:
+            config.num_assistant_tokens = kwargs.get("num_assistant_tokens", 5)
+            config.max_ngram_size = kwargs.get("max_ngram_size", 3)
         if self.draft_model_path:
             config.num_assistant_tokens = kwargs.get("num_assistant_tokens", 5)
         if self.adapter_path:
