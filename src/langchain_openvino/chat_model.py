@@ -7,7 +7,7 @@ from langchain_core.messages import AIMessage, BaseMessage, AIMessageChunk
 from langchain_core.outputs import ChatGeneration, ChatResult, ChatGenerationChunk
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from pydantic import PrivateAttr
-from .utils import ChunkStreamer, get_model_name, validate_parameters
+from .utils import ChunkStreamer, get_model_name, validate_parameters, decrypt_model, read_tokenizer
 
 
 class ChatOpenVINO(BaseChatModel):
@@ -20,6 +20,7 @@ class ChatOpenVINO(BaseChatModel):
     top_k: int = 50
     top_p: float = 0.95
     do_sample: bool = True
+    use_encrypted_model: bool = False
     draft_model_path: Optional[str] = None
     adapter_path: Optional[str] = None
     adapter_alpha: float = 0.75
@@ -32,6 +33,9 @@ class ChatOpenVINO(BaseChatModel):
         if not os.path.isdir(self.model_path):
             raise NotADirectoryError(f"Model path must be a directory: {self.model_path}")
         self._validate_parameters()
+        if self.use_encrypted_model:
+            self.model, self.weights = decrypt_model(self.model_path, 'openvino_model.xml', 'openvino_model.bin')
+            self.tokenizer = read_tokenizer(self.model_path)
         try:
             if self.draft_model_path:
                 if not os.path.exists(self.draft_model_path):
@@ -45,9 +49,15 @@ class ChatOpenVINO(BaseChatModel):
                     raise FileNotFoundError(f"Adapter path does not exist: {self.adapter_path}")
                 adapter = ov_genai.Adapter(self.adapter_path)
                 adapter_config = ov_genai.AdapterConfig(adapter)
-                self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device, adapter=adapter_config)
+                if self.use_encrypted_model:
+                    self._pipeline = ov_genai.LLMPipeline(self.model, self.weights, self.tokenizer, self.device, adapter=adapter_config)
+                else:
+                    self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device, adapter=adapter_config)
             else:
-                self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device)
+                if self.use_encrypted_model:
+                    self._pipeline = ov_genai.LLMPipeline(self.model, self.weights, self.tokenizer, self.device)
+                else:
+                    self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device)
         except Exception as e:
             raise RuntimeError(f"Failed to initialize OpenVINO pipeline: {e}")
         
