@@ -2,6 +2,7 @@ from typing import Type
 import pytest
 import os
 from pathlib import Path
+import openvino as ov
 from src.langchain_openvino.chat_model import ChatOpenVINO
 from langchain_tests.unit_tests import ChatModelUnitTests
 from src.langchain_openvino.utils import get_model_name
@@ -86,3 +87,32 @@ def test_model_with_prompt_lookup():
     assert model.prompt_lookup is True
     response = model.invoke("Hello, world!")
     assert response is not None
+
+def test_empty_input():
+    model = ChatOpenVINO(model_path=str(MODEL_PATH))
+    with pytest.raises(ValueError, match="No input message provided for generation."):
+        model.invoke("")
+
+@pytest.mark.parametrize("bad_input", [None, 1234, {}, [], True])
+def test_non_string_input(bad_input):
+    model = ChatOpenVINO(model_path=str(MODEL_PATH))
+    with pytest.raises(Exception):
+        model.invoke(bad_input)
+
+def test_long_prompt():
+    model = ChatOpenVINO(model_path=str(MODEL_PATH), max_tokens=128)
+    long_prompt = " ".join(["longinput"] * 2048)
+    response = model.invoke(long_prompt)
+    assert response is not None
+
+def test_invalid_device():
+    core = ov.Core()
+    available_devices = core.available_devices
+    if "NPU" in available_devices:
+        pytest.skip("Skipping test: 'NPU' is available on this system.")
+    with pytest.raises(Exception):
+        ChatOpenVINO(model_path=str(MODEL_PATH), device="NPU")
+
+def test_invalid_model_path():
+    with pytest.raises(FileNotFoundError):
+        ChatOpenVINO(model_path="invalid/path/to/model")
