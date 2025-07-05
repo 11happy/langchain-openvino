@@ -28,7 +28,7 @@ jobs:
 
       - name: Build documentation with pdoc
         run: |
-          poetry run pdoc ./src/langchain_openvino/chat_model.py 
+          poetry run pdoc ./src/langchain_openvino/chat_model.py --output-dir docs
 
       - uses: actions/upload-pages-artifact@v3
         with:
