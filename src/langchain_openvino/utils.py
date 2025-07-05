@@ -129,6 +129,14 @@ class IterableStreamer(openvino_genai.StreamerBase):
 
     def compute_decoded_length_for_position(self, cache_position: int):
         # decode was performed for this position, skippping
+        """
+        Computes and updates the decoded text length at a given token cache position.
+
+        Marks the position as incomplete (-1) if decoding ends in a replacement character.
+
+        Args:
+            cache_position (int): Index in the token cache.
+        """
         if self.decoded_lengths[cache_position] != -2:
             return
 
@@ -156,11 +164,34 @@ class IterableStreamer(openvino_genai.StreamerBase):
 
 
 class ChunkStreamer(IterableStreamer):
+    """
+    A streamer that emits tokens in fixed-size chunks.
+
+    This is useful for controlling the granularity of streamed output,
+    such as generating one chunk per N tokens.
+    """
+
     def __init__(self, tokenizer, tokens_len):
+        """
+        Initializes the ChunkStreamer with a tokenizer and chunk size.
+
+        Args:
+            tokenizer: Tokenizer used for decoding tokens.
+            tokens_len (int): Number of tokens per chunk.
+        """
         super().__init__(tokenizer)
         self.tokens_len = tokens_len
 
     def write(self, token: Union[int, list[int]]) -> openvino_genai.StreamingStatus:
+        """
+        Writes a token or list of tokens, emitting output every `tokens_len` tokens.
+
+        Args:
+            token (Union[int, list[int]]): Token(s) to add to the cache.
+
+        Returns:
+            openvino_genai.StreamingStatus: The current streaming status.
+        """
         if (len(self.tokens_cache) + 1) % self.tokens_len == 0:
             return super().write(token)
 
@@ -244,6 +275,17 @@ def validate_parameters(
 
 
 def decrypt_model(model_dir, model_file_name, weights_file_name):
+    """
+    Loads and (optionally) decrypts the OpenVINO model and weights files.
+
+    Args:
+        model_dir (str): Path to the directory containing model files.
+        model_file_name (str): Name of the model structure file (.xml).
+        weights_file_name (str): Name of the model weights file (.bin).
+
+    Returns:
+        Tuple[str, Tensor]: The model IR (XML as string) and weights (as OpenVINO Tensor).
+    """
     with open(model_dir + "/" + model_file_name, "r") as file:
         model = file.read()
     # decrypt model
@@ -257,6 +299,19 @@ def decrypt_model(model_dir, model_file_name, weights_file_name):
 
 
 def read_tokenizer(model_dir):
+    """
+    Loads and returns a Tokenizer instance using decrypted tokenizer and detokenizer files.
+
+    Assumes presence of:
+        - openvino_tokenizer.xml/bin
+        - openvino_detokenizer.xml/bin
+
+    Args:
+        model_dir (str): Path to the model directory containing tokenizer files.
+
+    Returns:
+        openvino_genai.Tokenizer: An initialized tokenizer instance.
+    """
     tokenizer_model_name = "openvino_tokenizer.xml"
     tokenizer_weights_name = "openvino_tokenizer.bin"
     tokenizer_model, tokenizer_weights = decrypt_model(
