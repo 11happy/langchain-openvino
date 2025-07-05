@@ -29,7 +29,7 @@ jobs:
       - run: pip install poetry && poetry install
       # ADJUST THIS: build your documentation into docs/.
       # We use a custom build script for pdoc itself, ideally you just run `pdoc -o docs/ ...` here.
-      - run: pdoc ./src/langchain_openvno/chat_model.py
+      - run: pdoc ./src/langchain_openvino/chat_model.py
 
       - uses: actions/upload-pages-artifact@v3
         with:
