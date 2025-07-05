@@ -229,6 +229,19 @@ class ChatOpenVINO(BaseChatModel):
         self._validate_parameters()
         return self
 
+    def with_prompt_lookup(self, prompt_lookup: bool):
+        """
+        Enable or disable prompt-based token reuse or guidance.
+
+        Args:
+            prompt_lookup (bool): Whether to enable prompt lookup.
+
+        Returns:
+            ChatOpenVINO: The updated model instance.
+        """
+        self.prompt_lookup = prompt_lookup
+        return self
+
     def _prepare_generation_config(self, **kwargs: Any):
         """
         Prepare generation configuration based on class attributes and runtime overrides.
