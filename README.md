@@ -13,7 +13,7 @@ This project uses Poetry for dependency management. Make sure you have Poetry in
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/11happy/langchain-openvino.git
 cd openvino-langchain
 
 # Install dependencies
