@@ -35,7 +35,7 @@ The main dependencies include:
 ### Basic Usage
 
 ```python
-from chat_openvino import ChatOpenVINO
+from langchain_openvino.chat_model import ChatOpenVINO
 from langchain_core.messages import HumanMessage
 
 # Initialize the model
@@ -56,6 +56,8 @@ for chunk in llm.stream("explain neural networks in simple terms"):
     print(chunk.content, end="", flush=True)
    
 ```
+
+![final1](https://github.com/user-attachments/assets/fce9ad2b-9dbf-494e-a0fc-7f135ce45ef4)
 
 #### Testing
 ##### Downloading Sample/Test Models:
