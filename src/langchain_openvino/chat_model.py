@@ -104,11 +104,11 @@ class ChatOpenVINO(BaseChatModel):
                         self.weights,
                         self.tokenizer,
                         self.device,
-                        adapter=adapter_config,
+                        adapters=adapter_config,
                     )
                 else:
                     self._pipeline = ov_genai.LLMPipeline(
-                        self.model_path, self.device, adapter=adapter_config
+                        self.model_path, self.device, adapters=adapter_config
                     )
             else:
                 if self.use_encrypted_model:
@@ -265,7 +265,7 @@ class ChatOpenVINO(BaseChatModel):
             config.num_assistant_tokens = kwargs.get("num_assistant_tokens", 5)
         if self.adapter_path:
             config.adapters = ov_genai.AdapterConfig(
-                (ov_genai.Adapter(self.adapter_path), self.adapter_alpha)
+                adapters=[(ov_genai.Adapter(self.adapter_path), self.adapter_alpha)]
             )
         return config
 
