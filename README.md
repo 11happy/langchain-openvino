@@ -36,8 +36,9 @@ The main dependencies include:
 
 ![final1](https://github.com/user-attachments/assets/fce9ad2b-9dbf-494e-a0fc-7f135ce45ef4)
 
+#### Chat Model
 ```python
-from langchain_openvino.chat_model import ChatOpenVINO
+from langchain_openvino import ChatOpenVINO
 from langchain_core.messages import HumanMessage
 
 # Initialize the model
@@ -59,8 +60,37 @@ for chunk in llm.stream("explain neural networks in simple terms"):
    
 ```
 
+#### Embedding Model
+```python
+from langchain_openvino import OpenVINOEmbeddings
+
+# Initialize embeddings
+embeddings = OpenVINOEmbeddings(
+    model_path="path/to/embedding/model",
+    device="CPU",
+    normalize=True,
+    pooling_type="CLS"
+)
+
+# Embed documents
+docs = ["This is a document", "Another document"]
+doc_embeddings = embeddings.embed_documents(docs)
+
+# Embed query
+query = "What is this about?"
+query_embedding = embeddings.embed_query(query)
+```
 
 #### Testing
+#### Converting Models to OpenVINO Format
+```bash
+
+pip install optimum[openvino]
+
+optimum-cli export openvino --model microsoft/DialoGPT-medium --task text-generation-with-past ./openvino-chat-model
+
+optimum-cli export openvino --model sentence-transformers/all-MiniLM-L6-v2 --task feature-extraction ./openvino-embedding-model
+```
 ##### Downloading Sample/Test Models:
 To run inference, you need to download an OpenVINO-compatible model:
 ```bash
@@ -77,15 +107,52 @@ poetry run pytest --disable-socket --allow-unix-socket --asyncio-mode=auto tests
 
 # Integration Testing
 poetry run pytest --disable-socket --allow-unix-socket --asyncio-mode=auto tests/integration_tests
+
+# Run all tests
+poetry run pytest --disable-socket --allow-unix-socket --asyncio-mode=auto
 ```
 
 ### Configuration Parameters
 
-- `model_path` (str): Path to the OpenVINO model directory
-- `device` (str): Target device for inference (default: "CPU")
-- `max_tokens` (int): Maximum number of tokens to generate (default: 256)
-- `temperature` (float): Sampling temperature (default: 1.0)
-- `top_k` (int): Top-k sampling parameter (default: 50)
-- `top_p` (float): Top-p (nucleus) sampling parameter (default: 0.95)
-- `do_sample` (bool): Whether to use sampling (default: True)
+**Chat Model Parameters**
+
+- `model_path (str)`:Path to the OpenVINO model directory
+
+- `device (str)`:Target device for inference (default`:"CPU")
+
+- `max_tokens (int)`:Maximum number of tokens to generate (default:256)
+
+- `temperature (float)`:Sampling temperature (default:1.0)
+
+- `top_k (int)`:Top-k sampling parameter (default:50)
+
+- `top_p (float)`:Top-p (nucleus) sampling parameter (default:0.95)
+
+- `do_sample (bool)`:Whether to use sampling (default:True)
+
+- `use_encrypted_model (bool)`:Whether the model is encrypted (default:False)
+
+- `prompt_lookup (bool)`:Enable prompt-based token reuse (default:False)
+
+- `draft_model_path (Optional[str])`:Path to draft model for speculative decoding
+
+- `adapter_path (Optional[str])`:Path to LoRA adapter
+
+- `adapter_alpha (float)`:Scaling factor for LoRA adapter (default:0.75)
+
+**Embedding Model Parameters**
+
+- `model_path (str)`:Path to the OpenVINO embedding model directory
+
+- `device (str)`:Target device for inference (default:"CPU")
+
+- `normalize (bool)`:Whether to normalize embeddings (default:True)
+
+- `pooling_type (str)`:Pooling strategy ("CLS", "MEAN", etc.) (default:"CLS")
+
+- `max_length (int)`:Maximum sequence length (default:256)
+
+- `query_instruction (str)`:Instruction prefix for queries
+
+- `embed_instruction (str)`:Instruction prefix for documents
 
