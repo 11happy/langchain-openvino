@@ -6,11 +6,15 @@ import openvino as ov
 from src.langchain_openvino.chat_model import ChatOpenVINO
 from langchain_tests.unit_tests import ChatModelUnitTests
 from src.langchain_openvino.utils import get_model_name
+from langchain_core.messages import HumanMessage
 
+# Define paths for models and images
 CUR_DIR = Path(__file__).parent
 DEFAULT_MODEL_PATH = CUR_DIR.parent.parent / "models" / "newov_model"
 MAIN_MODEL_PATH = CUR_DIR.parent.parent / "models" / "main-model"
 DRAFT_MODEL_PATH = CUR_DIR.parent.parent / "models" / "draft-model"
+VLM_MODEL_PATH = CUR_DIR.parent.parent / "models" / "vlm-model"
+SAMPLE_IMAGE_PATH = CUR_DIR.parent.parent / "images" / "sample-image.jpg"
 MODEL_PATH = Path(os.getenv("OPENVINO_MODEL_PATH", DEFAULT_MODEL_PATH))
 
 
@@ -129,3 +133,18 @@ def test_invalid_device():
 def test_invalid_model_path():
     with pytest.raises(FileNotFoundError):
         ChatOpenVINO(model_path="invalid/path/to/model")
+
+
+def test_vlm_pipeline():
+    model = ChatOpenVINO(model_path=str(VLM_MODEL_PATH), device="CPU")
+    response = model.invoke(
+        [
+            HumanMessage(
+                content=[
+                    {"type": "text", "text": "Describe this image:"},
+                    {"type": "image_url", "image_url": {"url": str(SAMPLE_IMAGE_PATH)}},
+                ]
+            )
+        ]
+    )
+    assert response is not None

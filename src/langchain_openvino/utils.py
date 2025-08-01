@@ -1,11 +1,17 @@
 import openvino_genai
 from openvino import Tensor
+import openvino as ov
 import queue
 import json
 import os
 import numpy as np
-from typing import Union
+from typing import Union, Dict, Any, List
+from PIL import Image
+import base64
+from io import BytesIO
+import requests
 from pydantic import BaseModel, Field, field_validator
+from langchain_core.messages import BaseMessage
 
 REPLACEMENT_CHAR = chr(
     65533
@@ -327,3 +333,148 @@ def read_tokenizer(model_dir):
     return openvino_genai.Tokenizer(
         tokenizer_model, tokenizer_weights, detokenizer_model, detokenizer_weights
     )
+
+
+def process_image_content(content_item: Dict[str, Any]) -> ov.Tensor:
+    """
+    Process image content from message and convert to OpenVINO Tensor.
+
+    Args:
+        content_item: Dictionary containing image data (URL, base64, or path)
+
+    Returns:
+        ov.Tensor: Image data as OpenVINO tensor
+    """
+    if content_item["type"] != "image_url":
+        raise ValueError("Expected image_url content type")
+
+    image_url = content_item["image_url"]["url"]
+
+    try:
+        if image_url.startswith("data:image"):
+            header, data = image_url.split(",", 1)
+            image_data = base64.b64decode(data)
+            image = Image.open(BytesIO(image_data))
+        elif image_url.startswith(("http://", "https://")):
+            response = requests.get(image_url)
+            response.raise_for_status()
+            image = Image.open(BytesIO(response.content))
+        else:
+            if not os.path.exists(image_url):
+                raise FileNotFoundError(f"Image file not found: {image_url}")
+            image = Image.open(image_url)
+
+        image_array = np.array(image)
+        return ov.Tensor(image_array)
+    except Exception as e:
+        raise RuntimeError(f"Failed to process image: {e}")
+
+
+def extract_text_and_images(
+    message: BaseMessage, is_vlm: bool
+) -> tuple[str, List[ov.Tensor]]:
+    """
+    Extract text and images from a message.
+
+    Args:
+        message: LangChain message object
+
+    Returns:
+        tuple: (text_content, list_of_image_tensors)
+    """
+    if isinstance(message, str):
+        return message, []
+    if isinstance(message.content, str):
+        return message.content, []
+    if isinstance(message.content, list):
+        text_parts = []
+        images = []
+        for content_item in message.content:
+            if isinstance(content_item, str):
+                text_parts.append(content_item)
+            elif isinstance(content_item, dict):
+                if content_item.get("type") == "text":
+                    text_parts.append(content_item["text"])
+                elif content_item.get("type") == "image_url":
+                    if is_vlm:
+                        image_tensor = process_image_content(content_item)
+                        images.append(image_tensor)
+                    else:
+                        raise ValueError("Images not supported for text-only models")
+        return " ".join(text_parts), images
+    raise ValueError(f"Unsupported message content type: {type(message.content)}")
+
+
+VLM_MODEL_TYPES = {
+    "minicpmv",
+    "llava",
+    "llava_next",
+    "internvl_chat",
+    "phi3_v",
+    "phi4mm",
+    "qwen2_vl",
+    "qwen2_5_vl",
+}
+
+VLM_INDICATORS = [
+    "vision",
+    "vlm",
+    "multimodal",
+    "internvl",
+    "llava",
+    "blip",
+    "clip",
+    "qwen-vl",
+    "cogvlm",
+    "minigpt",
+    "phi3v",
+]
+
+VISION_FILES = [
+    "vision_model.xml",
+    "image_encoder.xml",
+    "visual_encoder.xml",
+    "vision_tower.xml",
+    "image_projection.xml",
+]
+
+
+def detect_vlm_model(model_path: str) -> bool:
+    """
+    Detect if the model is a Vision-Language Model.
+
+    Returns:
+        bool: True if the model is a VLM, False otherwise.
+    """
+    processor_config_path = os.path.join(model_path, "processor_config.json")
+    if os.path.exists(processor_config_path):
+        try:
+            processor_config_path = os.path.join(model_path, "processor_config.json")
+            if os.path.exists(processor_config_path):
+                with open(processor_config_path, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+                model_type = config.get("model_type", "").lower()
+                if model_type in VLM_MODEL_TYPES:
+                    return True
+
+            config_path = os.path.join(model_path, "config.json")
+            if os.path.exists(config_path):
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+                model_type = config.get("model_type", "").lower()
+                architectures = config.get("architectures", [])
+                if any(ind in model_type for ind in VLM_INDICATORS):
+                    return True
+                if any(
+                    any(ind in arch.lower() for ind in VLM_INDICATORS)
+                    for arch in architectures
+                ):
+                    return True
+
+            if any(os.path.exists(os.path.join(model_path, f)) for f in VISION_FILES):
+                return True
+        except Exception as vlm_error:
+            print(f"Not a VLM model: {vlm_error}")
+    else:
+        print("No processor_config.json found - not a VLM model")
+    return False

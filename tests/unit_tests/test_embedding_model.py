@@ -1,4 +1,3 @@
-
 from huggingface_hub import snapshot_download
 from pathlib import Path
 import os
@@ -17,11 +16,12 @@ snapshot_download(
     local_dir_use_symlinks=False,
 )
 
+
 class TestOpenVINOEmbedding(EmbeddingsUnitTests):
     @property
     def embeddings_class(self) -> type[Embeddings]:
         return OpenVINOEmbeddings
-    
+
     @property
     def embedding_model_params(self) -> dict:
         return {
@@ -42,6 +42,7 @@ def test_embedding_initialization() -> None:
     assert response is not None
     document_embeddings = embeddings.embed_documents(["Document 1", "Document 2"])
     assert document_embeddings is not None
+
 
 import shutil
 

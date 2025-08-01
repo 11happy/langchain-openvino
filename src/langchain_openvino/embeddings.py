@@ -19,7 +19,9 @@ class OpenVINOEmbeddings(Embeddings):
         try:
             config = ov_genai.TextEmbeddingPipeline.Config(
                 normalize=normalize,
-                pooling_type=getattr(ov_genai.TextEmbeddingPipeline.PoolingType, pooling_type),
+                pooling_type=getattr(
+                    ov_genai.TextEmbeddingPipeline.PoolingType, pooling_type
+                ),
                 max_length=max_length,
                 query_instruction=query_instruction,
                 embed_instruction=embed_instruction,
@@ -31,7 +33,9 @@ class OpenVINOEmbeddings(Embeddings):
                 config,
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to initialize OpenVINO TextEmbeddingPipeline: {e}")
+            raise RuntimeError(
+                f"Failed to initialize OpenVINO TextEmbeddingPipeline: {e}"
+            )
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         try:

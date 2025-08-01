@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional, Iterator
 from threading import Thread
 import os
+import json
 import openvino_genai as ov_genai
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, AIMessageChunk
@@ -13,6 +14,8 @@ from .utils import (
     validate_parameters,
     decrypt_model,
     read_tokenizer,
+    extract_text_and_images,
+    detect_vlm_model,
 )
 
 
@@ -52,6 +55,7 @@ class ChatOpenVINO(BaseChatModel):
     adapter_path: Optional[str] = None
     adapter_alpha: float = 0.75
     _pipeline: Any = PrivateAttr()
+    _is_vlm: bool = PrivateAttr(default=False)
 
     def __init__(self, **kwargs):
         """
@@ -72,51 +76,60 @@ class ChatOpenVINO(BaseChatModel):
                 f"Model path must be a directory: {self.model_path}"
             )
         self._validate_parameters()
+        self._is_vlm = detect_vlm_model(self.model_path)
+
         if self.use_encrypted_model:
             self.model, self.weights = decrypt_model(
                 self.model_path, "openvino_model.xml", "openvino_model.bin"
             )
             self.tokenizer = read_tokenizer(self.model_path)
         try:
-            if self.draft_model_path:
-                if not os.path.exists(self.draft_model_path):
-                    raise FileNotFoundError(
-                        f"Draft model path does not exist: {self.draft_model_path}"
-                    )
-                if not os.path.isdir(self.draft_model_path):
-                    raise NotADirectoryError(
-                        f"Draft model path must be a directory: {self.draft_model_path}"
-                    )
-                draft_model = ov_genai.draft_model(self.draft_model_path, self.device)
-                self._pipeline = ov_genai.LLMPipeline(
-                    self.model_path, self.device, draft_model=draft_model
-                )
-            elif self.adapter_path:
-                if not os.path.exists(self.adapter_path):
-                    raise FileNotFoundError(
-                        f"Adapter path does not exist: {self.adapter_path}"
-                    )
-                adapter = ov_genai.Adapter(self.adapter_path)
-                adapter_config = ov_genai.AdapterConfig(adapter)
-                if self.use_encrypted_model:
-                    self._pipeline = ov_genai.LLMPipeline(
-                        self.model,
-                        self.weights,
-                        self.tokenizer,
-                        self.device,
-                        adapters=adapter_config,
-                    )
-                else:
-                    self._pipeline = ov_genai.LLMPipeline(
-                        self.model_path, self.device, adapters=adapter_config
-                    )
+            if self._is_vlm:
+                self._pipeline = ov_genai.VLMPipeline(self.model_path, self.device)
             else:
-                if self.use_encrypted_model:
-                    self._pipeline = ov_genai.LLMPipeline(
-                        self.model, self.weights, self.tokenizer, self.device
+                if self.draft_model_path:
+                    if not os.path.exists(self.draft_model_path):
+                        raise FileNotFoundError(
+                            f"Draft model path does not exist: {self.draft_model_path}"
+                        )
+                    if not os.path.isdir(self.draft_model_path):
+                        raise NotADirectoryError(
+                            f"Draft model path must be a directory: {self.draft_model_path}"
+                        )
+                    draft_model = ov_genai.draft_model(
+                        self.draft_model_path, self.device
                     )
+                    self._pipeline = ov_genai.LLMPipeline(
+                        self.model_path, self.device, draft_model=draft_model
+                    )
+                elif self.adapter_path:
+                    if not os.path.exists(self.adapter_path):
+                        raise FileNotFoundError(
+                            f"Adapter path does not exist: {self.adapter_path}"
+                        )
+                    adapter = ov_genai.Adapter(self.adapter_path)
+                    adapter_config = ov_genai.AdapterConfig(adapter)
+                    if self.use_encrypted_model:
+                        self._pipeline = ov_genai.LLMPipeline(
+                            self.model,
+                            self.weights,
+                            self.tokenizer,
+                            self.device,
+                            adapters=adapter_config,
+                        )
+                    else:
+                        self._pipeline = ov_genai.LLMPipeline(
+                            self.model_path, self.device, adapters=adapter_config
+                        )
                 else:
-                    self._pipeline = ov_genai.LLMPipeline(self.model_path, self.device)
+                    if self.use_encrypted_model:
+                        self._pipeline = ov_genai.LLMPipeline(
+                            self.model, self.weights, self.tokenizer, self.device
+                        )
+                    else:
+                        self._pipeline = ov_genai.LLMPipeline(
+                            self.model_path, self.device
+                        )
         except Exception as e:
             raise RuntimeError(f"Failed to initialize OpenVINO pipeline: {e}")
 
@@ -290,13 +303,24 @@ class ChatOpenVINO(BaseChatModel):
         """
         if not messages or not messages[-1].content:
             raise ValueError("No input message provided for generation.")
-        msg = messages[-1].content
+        txt, img = extract_text_and_images(messages[-1], self._is_vlm)
         configuration = self._prepare_generation_config(**kwargs)
         try:
-            resp = self._pipeline.generate(
-                msg,
-                configuration,
-            )
+            if self._is_vlm:
+                if not img:
+                    raise ValueError("Images are required for VLM models.")
+                cur_img = img[0]
+                resp = self._pipeline.generate(
+                    txt, image=cur_img, generation_config=configuration
+                )
+                resp = resp.texts[0]
+            else:
+                if img:
+                    raise ValueError("Images are not supported for text-only models.")
+                resp = self._pipeline.generate(
+                    txt,
+                    configuration,
+                )
         except Exception as e:
             raise RuntimeError(f"Failed to generate response: {e}")
         gen = ChatGeneration(message=AIMessage(content=resp))
