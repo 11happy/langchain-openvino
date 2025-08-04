@@ -478,3 +478,91 @@ def detect_vlm_model(model_path: str) -> bool:
     else:
         print("No processor_config.json found - not a VLM model")
     return False
+
+
+WHISPER_MODEL_TYPES = {
+    "whisper",
+}
+
+WHISPER_INDICATORS = [
+    "whisper",
+    "speech",
+    "audio",
+    "asr",
+    "transcription",
+    "speech-to-text",
+]
+
+WHISPER_FILES = [
+    "encoder_model.xml",
+    "decoder_model.xml", 
+    "decoder_model_merged.xml",
+    "decoder_with_past_model.xml",
+    "audio_encoder.xml",
+    "text_decoder.xml",
+]
+
+WHISPER_PROCESSOR_CLASSES = {
+    "whisperprocessor",
+    "whisperfeaturesextractor",
+}
+
+def detect_whisper_model(model_path: str) -> bool:
+    """
+    Detect if the model is a Whisper model.
+    
+    Args:
+        model_path (str): Path to the model directory
+        
+    Returns:
+        bool: True if the model is a Whisper model, False otherwise.
+    """
+    try:
+        preprocessor_config_path = os.path.join(model_path, "preprocessor_config.json")
+        if os.path.exists(preprocessor_config_path):
+            with open(preprocessor_config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            processor_class = config.get("processor_class", "").lower()
+            if processor_class in WHISPER_PROCESSOR_CLASSES:
+                return True
+            feature_extractor_type = config.get("feature_extractor_type", "").lower()
+            if "whisper" in feature_extractor_type:
+                return True
+
+        processor_config_path = os.path.join(model_path, "processor_config.json")
+        if os.path.exists(processor_config_path):
+            with open(processor_config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            
+            processor_class = config.get("processor_class", "").lower()
+            if processor_class in WHISPER_PROCESSOR_CLASSES:
+                return True
+                
+            model_type = config.get("model_type", "").lower()
+            if model_type in WHISPER_MODEL_TYPES:
+                return True
+
+        config_path = os.path.join(model_path, "config.json")
+        if os.path.exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            
+            model_type = config.get("model_type", "").lower()
+            architectures = config.get("architectures", [])
+ 
+            if model_type in WHISPER_MODEL_TYPES:
+                return True
+
+            if any(ind in model_type for ind in WHISPER_INDICATORS):
+                return True
+
+            if any(
+                any(ind in arch.lower() for ind in WHISPER_INDICATORS)
+                for arch in architectures
+            ):
+                return True
+    except Exception as whisper_error:
+        print(f"Error detecting Whisper model: {whisper_error}")
+        return False
+    
+    return False
