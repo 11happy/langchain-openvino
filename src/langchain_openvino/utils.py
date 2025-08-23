@@ -373,13 +373,13 @@ def process_image_content(content_item: Dict[str, Any]) -> ov.Tensor:
 
 def process_audio_content(content_item: Dict[str, Any]) -> ov.Tensor:
     """
-    Process audio content from message and convert to OpenVINO Tensor.
+    Process audio content.
 
     Args:
         content_item: Dictionary containing audio data (URL, base64, or path)
 
     Returns:
-        ov.Tensor: Audio data as OpenVINO tensor (16kHz, normalized)
+        raw audio: Audio data (16kHz, normalized)
     """
     if content_item["type"] != "audio_url":
         raise ValueError("Expected audio_url content type")
