@@ -14,8 +14,9 @@ from .utils import (
     validate_parameters,
     decrypt_model,
     read_tokenizer,
-    extract_text_and_images,
+    extract_data,
     detect_vlm_model,
+    detect_whisper_model,
 )
 
 
@@ -56,6 +57,7 @@ class ChatOpenVINO(BaseChatModel):
     adapter_alpha: float = 0.75
     _pipeline: Any = PrivateAttr()
     _is_vlm: bool = PrivateAttr(default=False)
+    _is_whisper: bool = PrivateAttr(default=False)
 
     def __init__(self, **kwargs):
         """
@@ -77,6 +79,7 @@ class ChatOpenVINO(BaseChatModel):
             )
         self._validate_parameters()
         self._is_vlm = detect_vlm_model(self.model_path)
+        self._is_whisper = detect_whisper_model(self.model_path)
 
         if self.use_encrypted_model:
             self.model, self.weights = decrypt_model(
@@ -86,6 +89,8 @@ class ChatOpenVINO(BaseChatModel):
         try:
             if self._is_vlm:
                 self._pipeline = ov_genai.VLMPipeline(self.model_path, self.device)
+            elif self._is_whisper:
+                self._pipeline = ov_genai.WhisperPipeline(self.model_path, self.device)
             else:
                 if self.draft_model_path:
                     if not os.path.exists(self.draft_model_path):
@@ -303,7 +308,7 @@ class ChatOpenVINO(BaseChatModel):
         """
         if not messages or not messages[-1].content:
             raise ValueError("No input message provided for generation.")
-        txt, img = extract_text_and_images(messages[-1], self._is_vlm)
+        txt, img, audio = extract_data(messages[-1], self._is_vlm, self._is_whisper)
         configuration = self._prepare_generation_config(**kwargs)
         try:
             if self._is_vlm:
@@ -314,9 +319,17 @@ class ChatOpenVINO(BaseChatModel):
                     txt, image=cur_img, generation_config=configuration
                 )
                 resp = resp.texts[0]
+            elif self._is_whisper:
+                if not audio:
+                    raise ValueError("Audio is required for Whisper models.")
+                cur_audio = audio[0]
+                resp = self._pipeline.generate(cur_audio)
+                resp = resp.texts[0]
             else:
                 if img:
                     raise ValueError("Images are not supported for text-only models.")
+                if audio:
+                    raise ValueError("Audio is not supported for text-only models.")
                 resp = self._pipeline.generate(
                     txt,
                     configuration,
@@ -345,7 +358,10 @@ class ChatOpenVINO(BaseChatModel):
         Yields:
             Iterator[ChatGenerationChunk]: Stream of response tokens.
         """
-        msg = messages[-1].content
+        txt, img, audio = extract_data(messages[-1], self._is_vlm, self._is_whisper)
+        if self._is_vlm or self.is_whisper:
+            raise NotImplementedError("Streaming not supported for VLM/Whisper models")
+
         configuration = self._prepare_generation_config(**kwargs)
         tokens_len = kwargs.get("tokens_len", 10)
         try:
@@ -356,7 +372,7 @@ class ChatOpenVINO(BaseChatModel):
             raise RuntimeError(f"Failed to create token streamer: {e}")
 
         def generate():
-            self._pipeline.generate(msg, configuration, token_streamer)
+            self._pipeline.generate(txt, configuration, token_streamer)
 
         generation_thread = Thread(target=generate, daemon=True)
         try:

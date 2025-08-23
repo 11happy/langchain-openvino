@@ -7,6 +7,7 @@ import os
 import numpy as np
 from typing import Union, Dict, Any, List
 from PIL import Image
+import librosa
 import base64
 from io import BytesIO
 import requests
@@ -370,9 +371,46 @@ def process_image_content(content_item: Dict[str, Any]) -> ov.Tensor:
         raise RuntimeError(f"Failed to process image: {e}")
 
 
-def extract_text_and_images(
-    message: BaseMessage, is_vlm: bool
-) -> tuple[str, List[ov.Tensor]]:
+def process_audio_content(content_item: Dict[str, Any]) -> ov.Tensor:
+    """
+    Process audio content from message and convert to OpenVINO Tensor.
+
+    Args:
+        content_item: Dictionary containing audio data (URL, base64, or path)
+
+    Returns:
+        ov.Tensor: Audio data as OpenVINO tensor (16kHz, normalized)
+    """
+    if content_item["type"] != "audio_url":
+        raise ValueError("Expected audio_url content type")
+
+    audio_url = content_item["audio_url"]["url"]
+
+    try:
+        if audio_url.startswith("data:audio"):
+            header, data = audio_url.split(",", 1)
+            audio_data = base64.b64decode(data)
+            audio_bytes = BytesIO(audio_data)
+            raw_speech, _ = librosa.load(audio_bytes, sr=16000)
+        elif audio_url.startswith(("http://", "https://")):
+            response = requests.get(audio_url)
+            response.raise_for_status()
+            audio_bytes = BytesIO(response.content)
+            raw_speech, _ = librosa.load(audio_bytes, sr=16000)
+        else:
+            if not os.path.exists(audio_url):
+                raise FileNotFoundError(f"Audio file not found: {audio_url}")
+            raw_speech, _ = librosa.load(audio_url, sr=16000)
+
+        # Convert to OpenVINO tensor
+        return raw_speech
+    except Exception as e:
+        raise RuntimeError(f"Failed to process audio: {e}")
+
+
+def extract_data(
+    message: BaseMessage, is_vlm: bool, is_whisper: bool
+) -> tuple[str, List[ov.Tensor], List]:
     """
     Extract text and images from a message.
 
@@ -380,15 +418,16 @@ def extract_text_and_images(
         message: LangChain message object
 
     Returns:
-        tuple: (text_content, list_of_image_tensors)
+        tuple: (text_content, list_of_image_tensors, list_of_audios)
     """
     if isinstance(message, str):
-        return message, []
+        return message, [], []
     if isinstance(message.content, str):
-        return message.content, []
+        return message.content, [], []
     if isinstance(message.content, list):
         text_parts = []
         images = []
+        audios = []
         for content_item in message.content:
             if isinstance(content_item, str):
                 text_parts.append(content_item)
@@ -401,7 +440,13 @@ def extract_text_and_images(
                         images.append(image_tensor)
                     else:
                         raise ValueError("Images not supported for text-only models")
-        return " ".join(text_parts), images
+                elif content_item.get("type") == "audio_url":
+                    if is_whisper:
+                        audio_tensor = process_audio_content(content_item)
+                        audios.append(audio_tensor)
+                    else:
+                        raise ValueError("Audio not supported for text-only models")
+        return " ".join(text_parts), images, audios
     raise ValueError(f"Unsupported message content type: {type(message.content)}")
 
 
@@ -495,7 +540,7 @@ WHISPER_INDICATORS = [
 
 WHISPER_FILES = [
     "encoder_model.xml",
-    "decoder_model.xml", 
+    "decoder_model.xml",
     "decoder_model_merged.xml",
     "decoder_with_past_model.xml",
     "audio_encoder.xml",
@@ -507,13 +552,14 @@ WHISPER_PROCESSOR_CLASSES = {
     "whisperfeaturesextractor",
 }
 
+
 def detect_whisper_model(model_path: str) -> bool:
     """
     Detect if the model is a Whisper model.
-    
+
     Args:
         model_path (str): Path to the model directory
-        
+
     Returns:
         bool: True if the model is a Whisper model, False otherwise.
     """
@@ -533,11 +579,11 @@ def detect_whisper_model(model_path: str) -> bool:
         if os.path.exists(processor_config_path):
             with open(processor_config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
-            
+
             processor_class = config.get("processor_class", "").lower()
             if processor_class in WHISPER_PROCESSOR_CLASSES:
                 return True
-                
+
             model_type = config.get("model_type", "").lower()
             if model_type in WHISPER_MODEL_TYPES:
                 return True
@@ -546,10 +592,10 @@ def detect_whisper_model(model_path: str) -> bool:
         if os.path.exists(config_path):
             with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
-            
+
             model_type = config.get("model_type", "").lower()
             architectures = config.get("architectures", [])
- 
+
             if model_type in WHISPER_MODEL_TYPES:
                 return True
 
@@ -564,5 +610,5 @@ def detect_whisper_model(model_path: str) -> bool:
     except Exception as whisper_error:
         print(f"Error detecting Whisper model: {whisper_error}")
         return False
-    
+
     return False

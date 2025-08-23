@@ -15,6 +15,8 @@ MAIN_MODEL_PATH = CUR_DIR.parent.parent / "models" / "main-model"
 DRAFT_MODEL_PATH = CUR_DIR.parent.parent / "models" / "draft-model"
 VLM_MODEL_PATH = CUR_DIR.parent.parent / "models" / "vlm-model"
 SAMPLE_IMAGE_PATH = CUR_DIR.parent.parent / "images" / "sample-image.jpg"
+WHISPER_MODEL_PATH = CUR_DIR.parent.parent / "models" / "whisper-model"
+SAMPLE_AUDIO_PATH = CUR_DIR.parent.parent / "audio" / "sample-audio.wav"
 MODEL_PATH = Path(os.getenv("OPENVINO_MODEL_PATH", DEFAULT_MODEL_PATH))
 
 
@@ -143,6 +145,20 @@ def test_vlm_pipeline():
                 content=[
                     {"type": "text", "text": "Describe this image:"},
                     {"type": "image_url", "image_url": {"url": str(SAMPLE_IMAGE_PATH)}},
+                ]
+            )
+        ]
+    )
+    assert response is not None
+
+
+def test_whisper_pipeline():
+    model = ChatOpenVINO(model_path=str(WHISPER_MODEL_PATH), device="CPU")
+    response = model.invoke(
+        [
+            HumanMessage(
+                content=[
+                    {"type": "audio_url", "audio_url": {"url": str(SAMPLE_AUDIO_PATH)}},
                 ]
             )
         ]
