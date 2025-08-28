@@ -359,7 +359,7 @@ class ChatOpenVINO(BaseChatModel):
             Iterator[ChatGenerationChunk]: Stream of response tokens.
         """
         txt, img, audio = extract_data(messages[-1], self._is_vlm, self._is_whisper)
-        if self._is_vlm or self.is_whisper:
+        if self._is_vlm or self._is_whisper:
             raise NotImplementedError("Streaming not supported for VLM/Whisper models")
 
         configuration = self._prepare_generation_config(**kwargs)
