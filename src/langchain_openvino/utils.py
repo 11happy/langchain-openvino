@@ -520,8 +520,7 @@ def detect_vlm_model(model_path: str) -> bool:
                 return True
         except Exception as vlm_error:
             print(f"Not a VLM model: {vlm_error}")
-    else:
-        print("No processor_config.json found - not a VLM model")
+    
     return False
 
 
