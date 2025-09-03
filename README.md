@@ -1,3 +1,7 @@
+
+> **Note:** This project was developed as part of **Google Summer of Code (GSoC) 2025**
+
+
 # OpenVINO LangChain Integration
 
 This project integrates LangChain with OpenVINO GenAI to enable efficient local inference.
